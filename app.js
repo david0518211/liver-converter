@@ -166,6 +166,9 @@ document.addEventListener('DOMContentLoaded', () => {
         finalTextSpan.innerHTML = finalTranscript;
         interimTextSpan.textContent = interimTranscript;
         
+        // Update Word Download Link dynamically
+        updateWordDownloadLink();
+        
         // Auto scroll to bottom with a slight delay to ensure DOM is updated
         setTimeout(() => {
             const transcriptBox = document.getElementById('transcriptBox');
@@ -238,38 +241,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Word Export
+    // --- Word Export (Dynamic Link for iOS Compatibility) ---
+    let currentWordUrl = null;
     const downloadWordBtn = document.getElementById('downloadWordBtn');
-    downloadWordBtn.addEventListener('click', () => {
+    
+    function updateWordDownloadLink() {
         const rawContent = finalTranscript + interimTextSpan.textContent;
         if (!rawContent.replace(/<br>/g, '').trim()) {
-            alert('沒有可匯出的文字！');
+            downloadWordBtn.removeAttribute('href');
+            downloadWordBtn.removeAttribute('download');
             return;
         }
 
         const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML to Word</title></head><body>";
         const footer = "</body></html>";
-        // format text with paragraphs
         const sourceHTML = header + `<p style="font-family: Arial, sans-serif; font-size: 14pt; line-height: 1.5;">${rawContent}</p>` + footer;
         
-        // Use octet-stream to force download on iOS Safari
-        const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/octet-stream' });
-        const url = URL.createObjectURL(blob);
+        const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
         
-        const fileDownload = document.createElement("a");
-        // Use visibility hidden instead of display none to bypass iOS click blocking
-        fileDownload.style.visibility = 'hidden';
-        fileDownload.style.position = 'absolute';
+        if (currentWordUrl) {
+            URL.revokeObjectURL(currentWordUrl);
+        }
+        currentWordUrl = URL.createObjectURL(blob);
         
-        document.body.appendChild(fileDownload);
-        fileDownload.href = url;
-        fileDownload.download = `語音紀錄_${new Date().getTime()}.doc`;
-        
-        fileDownload.click();
-        document.body.removeChild(fileDownload);
-        
-        // Critically important for iOS: wait at least a few seconds before revoking the URL
-        // otherwise Safari aborts the download silently.
-        setTimeout(() => URL.revokeObjectURL(url), 15000);
+        downloadWordBtn.href = currentWordUrl;
+        downloadWordBtn.download = `語音紀錄_${new Date().getTime()}.doc`;
+    }
+    
+    // Add click listener just to alert if empty
+    downloadWordBtn.addEventListener('click', (e) => {
+        if (!downloadWordBtn.getAttribute('href')) {
+            e.preventDefault();
+            alert('沒有可匯出的文字！');
+        }
     });
+
 });
