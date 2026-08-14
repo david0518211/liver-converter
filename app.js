@@ -252,18 +252,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // format text with paragraphs
         const sourceHTML = header + `<p style="font-family: Arial, sans-serif; font-size: 14pt; line-height: 1.5;">${rawContent}</p>` + footer;
         
-        // Use Blob instead of data URI for better iOS compatibility
-        const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
+        // Use octet-stream to force download on iOS Safari
+        const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/octet-stream' });
         const url = URL.createObjectURL(blob);
         
         const fileDownload = document.createElement("a");
+        fileDownload.style.display = 'none';
         document.body.appendChild(fileDownload);
         fileDownload.href = url;
         fileDownload.download = `語音紀錄_${new Date().getTime()}.doc`;
+        
         fileDownload.click();
         document.body.removeChild(fileDownload);
         
-        // Clean up the URL object
-        setTimeout(() => URL.revokeObjectURL(url), 100);
+        // Critically important for iOS: wait at least a few seconds before revoking the URL
+        // otherwise Safari aborts the download silently.
+        setTimeout(() => URL.revokeObjectURL(url), 15000);
     });
 });
