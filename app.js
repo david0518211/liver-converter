@@ -257,7 +257,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = URL.createObjectURL(blob);
         
         const fileDownload = document.createElement("a");
-        fileDownload.style.display = 'none';
+        // Use visibility hidden instead of display none to bypass iOS click blocking
+        fileDownload.style.visibility = 'hidden';
+        fileDownload.style.position = 'absolute';
+        
         document.body.appendChild(fileDownload);
         fileDownload.href = url;
         fileDownload.download = `語音紀錄_${new Date().getTime()}.doc`;
