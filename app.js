@@ -252,12 +252,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // format text with paragraphs
         const sourceHTML = header + `<p style="font-family: Arial, sans-serif; font-size: 14pt; line-height: 1.5;">${rawContent}</p>` + footer;
         
-        const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+        // Use Blob instead of data URI for better iOS compatibility
+        const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        
         const fileDownload = document.createElement("a");
         document.body.appendChild(fileDownload);
-        fileDownload.href = source;
+        fileDownload.href = url;
         fileDownload.download = `語音紀錄_${new Date().getTime()}.doc`;
         fileDownload.click();
         document.body.removeChild(fileDownload);
+        
+        // Clean up the URL object
+        setTimeout(() => URL.revokeObjectURL(url), 100);
     });
 });
